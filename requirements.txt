@@ -1,0 +1,12 @@
+numpy
+h5py
+requests
+tqdm
+pandas
+tabulate
+qdrant-client
+pymilvus
+weaviate-client
+opensearch-py
+elasticsearch
+colorama
