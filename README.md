@@ -48,3 +48,67 @@ See `TUNING_GUIDE.md` for details on how the engines are configured.
 
 ## Results
 Results are printed to the console and saved to `benchmark_results.csv`.
+
+---
+
+## ☁️ Instrucciones para Ejecución Remota (EC2 / Cloud)
+
+Para ejecutar este benchmark en una instancia de nube (ej. AWS EC2 `t3.large` o superior), sigue estos pasos optimizados para recursos limitados:
+
+### 1. Preparar la Instancia
+Conéctate a tu servidor y asegúrate de tener Docker y Git instalados.
+
+```bash
+# Actualizar y instalar dependencias básicas
+sudo apt update && sudo apt install -y git docker.io docker-compose python3-venv
+
+# Configurar permisos de Docker (evita usar sudo para docker)
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+### 2. Clonar el Repositorio
+```bash
+git clone https://github.com/eudesz/vector_database_benchmark.git
+cd vector_database_benchmark
+```
+
+### 3. Configurar Entorno Python
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 4. Configurar Swap (Opcional pero Recomendado)
+Si usas una instancia con **8GB RAM o menos** (como `t3.large`), es crítico añadir Swap para evitar que el OOM Killer mate los procesos de Java (Elasticsearch/Milvus).
+
+```bash
+# Crear 4GB de swap
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+```
+
+### 5. Configurar Memoria Virtual (Para Elastic/OpenSearch)
+Elasticsearch requiere un límite alto de mapas de memoria virtual.
+```bash
+sudo sysctl -w vm.max_map_count=262144
+# Para hacerlo permanente:
+echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
+```
+
+### 6. Ejecutar Benchmark Secuencial
+Para evitar saturar la RAM, usa el script `run_local_sequential.sh`. Este script levanta un motor, ejecuta las pruebas, lo apaga y limpia antes de pasar al siguiente.
+
+```bash
+chmod +x run_local_sequential.sh
+./run_local_sequential.sh
+```
+
+### 7. Ver Resultados
+Al finalizar, los resultados estarán en:
+```bash
+cat benchmark_results.csv
+```
